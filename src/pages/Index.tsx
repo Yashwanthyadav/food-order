@@ -1,57 +1,56 @@
-
 import React from "react";
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
 
-// Sample product data
+// Updated product data with biryani, mandi, paratha and curries
 const products = [
   {
     id: "1",
-    name: "Fresh Organic Avocados",
-    price: 3.99,
-    image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?q=80&w=400&auto=format",
-    description: "Ripe, buttery Hass avocados perfect for guacamole or avocado toast. Locally sourced from organic farms.",
-    store: "Green Market"
+    name: "Hyderabadi Chicken Biryani",
+    price: 14.99,
+    image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=400&auto=format",
+    description: "Fragrant basmati rice cooked with tender chicken, saffron, and authentic spices in the traditional Hyderabadi style.",
+    store: "Biryani House"
   },
   {
     id: "2",
-    name: "Artisan Sourdough Bread",
-    price: 5.49,
-    image: "https://images.unsplash.com/photo-1585478259515-2224b028539e?q=80&w=400&auto=format",
-    description: "Freshly baked sourdough with a crispy crust and soft interior. Made with our 100-year-old starter.",
-    store: "City Bakery"
+    name: "Lamb Mandi Rice",
+    price: 16.99,
+    image: "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?q=80&w=400&auto=format",
+    description: "Slow-cooked tender lamb served over aromatic rice with Middle Eastern spices and roasted nuts.",
+    store: "Mandi Palace"
   },
   {
     id: "3",
-    name: "Premium Grass-Fed Beef",
-    price: 12.99,
-    image: "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=400&auto=format",
-    description: "Ethically raised grass-fed beef from local farms. Hormone and antibiotic free.",
-    store: "Butcher's Choice"
+    name: "Butter Chicken Curry",
+    price: 13.99,
+    image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=400&auto=format",
+    description: "Creamy tomato-based curry with tender chicken pieces, flavored with butter and aromatic spices.",
+    store: "Curry Delight"
   },
   {
     id: "4",
-    name: "Organic Strawberries",
-    price: 4.99,
-    image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?q=80&w=400&auto=format",
-    description: "Sweet and juicy organic strawberries freshly picked at peak ripeness.",
-    store: "Fresh Farms"
+    name: "Flaky Paratha Bread",
+    price: 3.99,
+    image: "https://images.unsplash.com/photo-1565280654386-466afe82abe3?q=80&w=400&auto=format",
+    description: "Layered whole wheat flatbread, pan-fried to perfection. Served hot and flaky.",
+    store: "Paratha Corner"
   },
   {
     id: "5",
-    name: "Gourmet Italian Pasta",
-    price: 3.49,
-    image: "https://images.unsplash.com/photo-1551462147-37885acc36f1?q=80&w=400&auto=format",
-    description: "Authentic Italian pasta made with durum wheat semolina. Perfect al dente texture.",
-    store: "Pasta Palace"
+    name: "Vegetable Biryani",
+    price: 12.99,
+    image: "https://images.unsplash.com/photo-1645177628172-a94c1f96e6db?q=80&w=400&auto=format",
+    description: "Fragrant basmati rice cooked with mixed vegetables, saffron, and authentic spices in the traditional style.",
+    store: "Biryani House"
   },
   {
     id: "6",
-    name: "Aged Cheddar Cheese",
-    price: 8.99,
-    image: "https://images.unsplash.com/photo-1566454825481-9c31bd88df4a?q=80&w=400&auto=format",
-    description: "Sharp and tangy aged cheddar cheese. Perfect for sandwiches or charcuterie boards.",
-    store: "Cheese Haven"
+    name: "Chicken Korma Curry",
+    price: 14.99,
+    image: "https://images.unsplash.com/photo-1574653853027-5382a3d23a7d?q=80&w=400&auto=format",
+    description: "Mild and creamy curry made with chicken, yogurt, nuts, and aromatic spices. Perfect with rice or bread.",
+    store: "Curry Delight"
   }
 ];
 

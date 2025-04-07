@@ -9,7 +9,7 @@ import SearchBar from "./SearchBar";
 
 const Header = () => {
   const [location, setLocation] = useState("");
-  const [cartItems, setCartItems] = useState(0);
+  const [cartItems, setCartItems] = useState(3); // Starting with a sample count
   const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
   const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
 
