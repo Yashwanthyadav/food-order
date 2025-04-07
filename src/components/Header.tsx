@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Search, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import LocationSelector from "./LocationSelector";
+import SearchBar from "./SearchBar";
 
 const Header = () => {
   const [location, setLocation] = useState("");
@@ -14,7 +15,6 @@ const Header = () => {
 
   const handleLocationSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Open the location selector instead of just logging
     setIsLocationSelectorOpen(true);
   };
 
@@ -33,10 +33,10 @@ const Header = () => {
             ShopNearby
           </Link>
 
-          {/* Location Search */}
+          {/* Location Selection */}
           <form 
             onSubmit={handleLocationSearch}
-            className="flex-1 max-w-md mx-4"
+            className="flex items-center"
           >
             <div className="relative flex items-center">
               <MapPin className="absolute left-2 h-4 w-4 text-muted-foreground" />
@@ -55,10 +55,13 @@ const Header = () => {
                 variant="ghost" 
                 className="absolute right-0"
               >
-                <Search className="h-4 w-4 text-muted-foreground" />
+                <MapPin className="h-4 w-4 text-muted-foreground" />
               </Button>
             </div>
           </form>
+
+          {/* Search */}
+          <SearchBar />
 
           {/* Cart */}
           <div className="relative">
