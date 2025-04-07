@@ -4,15 +4,24 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, Search, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
+import LocationSelector from "./LocationSelector";
 
 const Header = () => {
   const [location, setLocation] = useState("");
   const [cartItems, setCartItems] = useState(0);
+  const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
+  const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
 
   const handleLocationSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Searching for location:", location);
-    // Here you would implement location search functionality
+    // Open the location selector instead of just logging
+    setIsLocationSelectorOpen(true);
+  };
+
+  const handleSelectLocation = (locationData: { address: string; coordinates: [number, number] }) => {
+    setLocation(locationData.address);
+    setCoordinates(locationData.coordinates);
+    console.log("Selected location:", locationData);
   };
 
   return (
@@ -37,6 +46,8 @@ const Header = () => {
                 className="pl-8 pr-10"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+                onClick={() => setIsLocationSelectorOpen(true)}
+                readOnly
               />
               <Button 
                 type="submit" 
@@ -62,6 +73,13 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* Location Selector Modal */}
+      <LocationSelector 
+        isOpen={isLocationSelectorOpen} 
+        onClose={() => setIsLocationSelectorOpen(false)}
+        onSelectLocation={handleSelectLocation}
+      />
     </header>
   );
 };
