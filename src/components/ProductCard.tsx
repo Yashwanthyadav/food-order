@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Plus, Minus, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 interface ProductCardProps {
   id: string;
@@ -105,14 +106,27 @@ const ProductCard = ({ id, name, price, image, description, store }: ProductCard
         )}
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button 
-          onClick={handleAddToCart} 
-          className={`w-full transition-colors ${isInCart ? 'bg-green-600 hover:bg-green-700' : 'bg-amber-600 hover:bg-amber-700'}`}
-          size="sm"
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" /> 
-          {isInCart ? "Add More" : "Add to Cart"}
-        </Button>
+        {isInCart ? (
+          <Button 
+            className="w-full bg-green-600 hover:bg-green-700"
+            size="sm"
+            asChild
+          >
+            <Link to="/cart">
+              <ShoppingCart className="mr-2 h-4 w-4" /> 
+              View Cart
+            </Link>
+          </Button>
+        ) : (
+          <Button 
+            onClick={handleAddToCart} 
+            className="w-full bg-amber-600 hover:bg-amber-700"
+            size="sm"
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" /> 
+            Add to Cart
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

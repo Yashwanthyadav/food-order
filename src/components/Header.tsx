@@ -65,13 +65,15 @@ const Header = () => {
 
           {/* Cart */}
           <div className="relative">
-            <Button variant="ghost" size="icon">
-              <ShoppingCart className="h-6 w-6" />
-              {cartItems > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                  {cartItems}
-                </span>
-              )}
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/cart">
+                <ShoppingCart className="h-6 w-6" />
+                {cartItems > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-xs text-white">
+                    {cartItems}
+                  </span>
+                )}
+              </Link>
             </Button>
           </div>
         </div>
