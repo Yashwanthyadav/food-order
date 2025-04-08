@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ShieldAlert, Bell, User } from 'lucide-react';
+import { ShieldAlert, Bell, User, BadgeIndianRupee } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 
 const AdminHeader = () => {
@@ -16,6 +16,11 @@ const AdminHeader = () => {
           <SearchBar onSearch={(query) => console.log("Admin search:", query)} />
           
           <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-1 text-amber-600">
+              <BadgeIndianRupee className="h-5 w-5" />
+              <span className="font-medium">INR</span>
+            </div>
+            
             <button className="relative p-2 rounded-full hover:bg-slate-100">
               <Bell className="h-5 w-5" />
               <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">

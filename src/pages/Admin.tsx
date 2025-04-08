@@ -5,6 +5,7 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import UsersTable from "@/components/admin/UsersTable";
 import OrdersTable from "@/components/admin/OrdersTable";
 import ItemsTable from "@/components/admin/ItemsTable";
+import CouponCodesTable from "@/components/admin/CouponCodesTable";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ShieldAlert } from "lucide-react";
@@ -38,10 +39,11 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="items">Items</TabsTrigger>
+            <TabsTrigger value="coupons">Coupons</TabsTrigger>
           </TabsList>
           
           <TabsContent value="orders" className="bg-white rounded-lg shadow p-6">
@@ -54,6 +56,10 @@ const Admin = () => {
           
           <TabsContent value="items" className="bg-white rounded-lg shadow p-6">
             <ItemsTable />
+          </TabsContent>
+          
+          <TabsContent value="coupons" className="bg-white rounded-lg shadow p-6">
+            <CouponCodesTable />
           </TabsContent>
         </Tabs>
       </div>
