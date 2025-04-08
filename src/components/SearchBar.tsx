@@ -1,16 +1,26 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const SearchBar = () => {
+interface SearchBarProps {
+  onSearch?: (query: string) => void;
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement search functionality
     console.log("Searching for:", searchQuery);
+    
+    if (onSearch) {
+      onSearch(searchQuery);
+    } else {
+      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+    }
   };
 
   return (
@@ -19,7 +29,7 @@ const SearchBar = () => {
         <Search className="absolute left-2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Search products..."
+          placeholder="Search for biryani, mandi, paratha..."
           className="pl-8 pr-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

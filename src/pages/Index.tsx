@@ -1,4 +1,6 @@
-import React from "react";
+
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
 
@@ -55,9 +57,40 @@ const products = [
 ];
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+  const [filteredProducts, setFilteredProducts] = useState(products);
+
+  // Filter products when search query changes
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = products.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.store.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    } else {
+      setFilteredProducts(products);
+    }
+  }, [searchQuery]);
+
+  const handleSearch = (query: string) => {
+    if (query) {
+      const filtered = products.filter(product => 
+        product.name.toLowerCase().includes(query.toLowerCase()) ||
+        product.description.toLowerCase().includes(query.toLowerCase()) ||
+        product.store.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    } else {
+      setFilteredProducts(products);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header onSearch={handleSearch} />
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Welcome to ShopNearby</h1>
@@ -65,12 +98,20 @@ const Index = () => {
         </div>
         
         <section>
-          <h2 className="text-2xl font-semibold mb-6">Featured Products</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
+          <h2 className="text-2xl font-semibold mb-6">
+            {searchQuery ? `Search Results for "${searchQuery}"` : "Featured Products"}
+          </h2>
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-lg text-gray-600">No products found matching your search.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} {...product} />
+              ))}
+            </div>
+          )}
         </section>
         
         <section className="mt-16">

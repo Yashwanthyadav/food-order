@@ -2,14 +2,18 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart } from "lucide-react";
+import { MapPin, Search, ShoppingCart, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import LocationSelector from "./LocationSelector";
 import SearchBar from "./SearchBar";
 
-const Header = () => {
+interface HeaderProps {
+  onSearch?: (query: string) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onSearch }) => {
   const [location, setLocation] = useState("");
-  const [cartItems, setCartItems] = useState(3); // Starting with a sample count
+  const [cartItems, setCartItems] = useState(0); // Starting with a sample count
   const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
   const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
 
@@ -61,20 +65,29 @@ const Header = () => {
           </form>
 
           {/* Search */}
-          <SearchBar />
+          <SearchBar onSearch={onSearch} />
 
-          {/* Cart */}
-          <div className="relative">
+          <div className="flex items-center space-x-4">
+            {/* Login Button */}
             <Button variant="ghost" size="icon" asChild>
-              <Link to="/cart">
-                <ShoppingCart className="h-6 w-6" />
-                {cartItems > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-xs text-white">
-                    {cartItems}
-                  </span>
-                )}
+              <Link to="/login">
+                <User className="h-6 w-6" />
               </Link>
             </Button>
+
+            {/* Cart */}
+            <div className="relative">
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/cart">
+                  <ShoppingCart className="h-6 w-6" />
+                  {cartItems > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-xs text-white">
+                      {cartItems}
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
