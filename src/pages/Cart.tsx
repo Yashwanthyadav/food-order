@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -31,7 +30,7 @@ const initialCartItems = [
   {
     id: "1",
     name: "Hyderabadi Chicken Biryani",
-    price: 14.99,
+    price: 999,
     image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=400&auto=format",
     quantity: 1,
     store: "Biryani House"
@@ -39,7 +38,7 @@ const initialCartItems = [
   {
     id: "3",
     name: "Butter Chicken Curry",
-    price: 13.99,
+    price: 899,
     image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=400&auto=format",
     quantity: 2,
     store: "Curry Delight"
@@ -59,7 +58,7 @@ const Cart = () => {
 
   // Calculate totals
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const deliveryFee = subtotal > 0 ? 2.99 : 0;
+  const deliveryFee = subtotal > 0 ? 199 : 0; // ₹199 delivery fee
   const tax = subtotal * 0.08; // Assuming 8% tax
   const grandTotal = subtotal + deliveryFee + tax - discount;
 
@@ -204,7 +203,7 @@ const Cart = () => {
                         </Button>
                       </div>
                       <div className="text-right min-w-[80px]">
-                        <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>
+                        <div className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</div>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -276,26 +275,26 @@ const Cart = () => {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>₹{subtotal.toFixed(2)}</span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Discount</span>
-                      <span>-${discount.toFixed(2)}</span>
+                      <span>-₹{discount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delivery Fee</span>
-                    <span>${deliveryFee.toFixed(2)}</span>
+                    <span>₹{deliveryFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tax</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>₹{tax.toFixed(2)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>${grandTotal.toFixed(2)}</span>
+                    <span>₹{grandTotal.toFixed(2)}</span>
                   </div>
                 </CardContent>
                 <CardFooter>

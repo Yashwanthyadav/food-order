@@ -66,7 +66,7 @@ const ProductCard = ({ id, name, price, image, description, store }: ProductCard
         <div className="text-sm text-amber-600 font-medium mb-1">{store}</div>
         <h3 className="font-semibold text-lg text-gray-800">{name}</h3>
         <p className="text-muted-foreground line-clamp-2 text-sm mt-1">{description}</p>
-        <div className="mt-2 font-bold text-lg text-gray-900">${price.toFixed(2)}</div>
+        <div className="mt-2 font-bold text-lg text-gray-900">₹{price.toFixed(2)}</div>
         
         {isInCart ? (
           <div className="flex items-center mt-2">
