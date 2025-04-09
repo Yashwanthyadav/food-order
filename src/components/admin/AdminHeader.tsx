@@ -2,6 +2,7 @@
 import React from 'react';
 import { ShieldAlert, Bell, User, BadgeIndianRupee } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
+import { Link } from 'react-router-dom';
 
 const AdminHeader = () => {
   return (
@@ -9,8 +10,10 @@ const AdminHeader = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShieldAlert className="h-6 w-6 text-amber-600" />
-            <span className="text-xl font-bold">Admin Panel</span>
+            <Link to="/admin" className="flex items-center gap-2">
+              <ShieldAlert className="h-6 w-6 text-amber-600" />
+              <span className="text-xl font-bold">Admin Panel</span>
+            </Link>
           </div>
           
           <SearchBar onSearch={(query) => console.log("Admin search:", query)} />
@@ -34,6 +37,10 @@ const AdminHeader = () => {
               </div>
               <span className="font-medium">Admin</span>
             </div>
+            
+            <Link to="/" className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-medium hover:bg-amber-200 transition-colors">
+              View Site
+            </Link>
           </div>
         </div>
       </div>

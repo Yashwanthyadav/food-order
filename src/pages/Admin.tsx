@@ -8,11 +8,12 @@ import ItemsTable from "@/components/admin/ItemsTable";
 import CouponCodesTable from "@/components/admin/CouponCodesTable";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ShieldAlert, DollarSign, BadgeIndianRupee } from "lucide-react";
 import AdminLogin from "@/components/admin/AdminLogin";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activePage, setActivePage] = useState("orders");
   const navigate = useNavigate();
 
   const handleLogin = (success: boolean) => {
@@ -33,12 +34,18 @@ const Admin = () => {
             <ShieldAlert className="h-6 w-6 text-amber-600" />
             <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           </div>
-          <Button variant="outline" onClick={() => navigate("/")}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Site
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 bg-amber-100 px-3 py-1 rounded-full">
+              <BadgeIndianRupee className="h-4 w-4 text-amber-800" />
+              <span className="text-amber-800 font-medium text-sm">INR Currency</span>
+            </div>
+            <Button variant="outline" onClick={() => navigate("/")}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Site
+            </Button>
+          </div>
         </div>
 
-        <Tabs defaultValue="orders" className="w-full">
+        <Tabs defaultValue="orders" className="w-full" value={activePage} onValueChange={setActivePage}>
           <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>

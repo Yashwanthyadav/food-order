@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -62,6 +61,34 @@ const ItemsTable = () => {
   };
 
   const handleSave = () => {
+    // Validate form data
+    if (!formData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Item name cannot be empty",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.price <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Price must be greater than 0",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.stock < 0) {
+      toast({
+        title: "Validation Error",
+        description: "Stock cannot be negative",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (newItem) {
       // Add new item
       const newItemWithId = {
@@ -86,12 +113,15 @@ const ItemsTable = () => {
   };
 
   const handleDelete = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
-    toast({
-      title: "Item Deleted",
-      description: "The item has been removed from the menu.",
-      variant: "destructive"
-    });
+    const itemToDelete = items.find(item => item.id === id);
+    if (itemToDelete) {
+      setItems(items.filter(item => item.id !== id));
+      toast({
+        title: "Item Deleted",
+        description: `${itemToDelete.name} has been removed from the menu.`,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAddNew = () => {
@@ -148,6 +178,7 @@ const ItemsTable = () => {
                   name="name" 
                   onChange={handleChange} 
                   placeholder="Item name"
+                  required
                 />
               </TableCell>
               <TableCell>
@@ -171,8 +202,9 @@ const ItemsTable = () => {
                   value={formData.price} 
                   name="price" 
                   onChange={handleChange}
-                  min={0}
+                  min={1}
                   className="text-right"
+                  required
                 />
               </TableCell>
               <TableCell>
@@ -183,6 +215,7 @@ const ItemsTable = () => {
                   onChange={handleChange}
                   min={0}
                   className="text-center"
+                  required
                 />
               </TableCell>
               <TableCell>
@@ -211,6 +244,7 @@ const ItemsTable = () => {
               </TableCell>
             </TableRow>
           )}
+          
           {items.map((item) => (
             <TableRow key={item.id}>
               {editingItem?.id === item.id ? (
@@ -221,6 +255,7 @@ const ItemsTable = () => {
                       value={formData.name} 
                       name="name" 
                       onChange={handleChange} 
+                      required
                     />
                   </TableCell>
                   <TableCell>
@@ -244,8 +279,9 @@ const ItemsTable = () => {
                       value={formData.price} 
                       name="price" 
                       onChange={handleChange}
-                      min={0}
+                      min={1}
                       className="text-right"
+                      required
                     />
                   </TableCell>
                   <TableCell>
@@ -256,6 +292,7 @@ const ItemsTable = () => {
                       onChange={handleChange}
                       min={0}
                       className="text-center"
+                      required
                     />
                   </TableCell>
                   <TableCell>

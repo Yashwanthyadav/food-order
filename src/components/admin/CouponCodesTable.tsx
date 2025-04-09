@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
+import { Edit, Plus, Save, Trash2, X, BadgeIndianRupee } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -76,7 +76,70 @@ const CouponCodesTable = () => {
     });
   };
 
+  const validateCouponForm = () => {
+    if (!formData.code.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Coupon code cannot be empty",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.discount <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Discount must be greater than 0",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.minAmount < 0) {
+      toast({
+        title: "Validation Error",
+        description: "Minimum amount cannot be negative",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.maxUses <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Maximum uses must be greater than 0",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!formData.expiryDate) {
+      toast({
+        title: "Validation Error",
+        description: "Expiry date is required",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Check if the coupon code already exists (for new coupons)
+    if (newCoupon && coupons.some(coupon => coupon.code === formData.code)) {
+      toast({
+        title: "Validation Error",
+        description: "Coupon code already exists",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = () => {
+    if (!validateCouponForm()) {
+      return;
+    }
+
     if (newCoupon) {
       // Add new coupon
       const newCouponWithId = {
@@ -102,12 +165,15 @@ const CouponCodesTable = () => {
   };
 
   const handleDelete = (id: number) => {
-    setCoupons(coupons.filter(coupon => coupon.id !== id));
-    toast({
-      title: "Coupon Deleted",
-      description: "The coupon has been removed from the system.",
-      variant: "destructive"
-    });
+    const couponToDelete = coupons.find(coupon => coupon.id === id);
+    if (couponToDelete) {
+      setCoupons(coupons.filter(coupon => coupon.id !== id));
+      toast({
+        title: "Coupon Deleted",
+        description: `Coupon code ${couponToDelete.code} has been removed from the system.`,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAddNew = () => {
@@ -134,13 +200,34 @@ const CouponCodesTable = () => {
     setNewCoupon(false);
   };
 
+  const verifyCouponStatus = (coupon: CouponCode) => {
+    const today = new Date();
+    const expiryDate = new Date(coupon.expiryDate);
+    
+    if (expiryDate < today) {
+      return "expired";
+    }
+    
+    if (coupon.usedCount >= coupon.maxUses) {
+      return "exhausted";
+    }
+    
+    return coupon.status;
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">Coupon Codes</h2>
-        <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={handleAddNew}>
-          Add Coupon
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full flex items-center gap-1 text-sm">
+            <BadgeIndianRupee className="h-3.5 w-3.5" />
+            <span>Indian Rupee (₹)</span>
+          </div>
+          <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={handleAddNew}>
+            <Plus className="h-4 w-4 mr-1" /> Add Coupon
+          </Button>
+        </div>
       </div>
       
       <Table>
@@ -167,6 +254,7 @@ const CouponCodesTable = () => {
                     onChange={handleChange} 
                     placeholder="Coupon code"
                     className="uppercase"
+                    required
                   />
                   <Button variant="outline" size="sm" onClick={generateRandomCode}>
                     <Plus className="h-3 w-3 mr-1" /> Generate
@@ -180,8 +268,9 @@ const CouponCodesTable = () => {
                     value={formData.discount} 
                     name="discount" 
                     onChange={handleChange} 
-                    min={0}
+                    min={1}
                     className="w-20"
+                    required
                   />
                   <Select 
                     value={formData.type} 
@@ -205,6 +294,7 @@ const CouponCodesTable = () => {
                   onChange={handleChange}
                   min={0}
                   className="w-24"
+                  required
                 />
               </TableCell>
               <TableCell>
@@ -215,6 +305,7 @@ const CouponCodesTable = () => {
                   onChange={handleChange}
                   min={1}
                   className="w-20"
+                  required
                 />
               </TableCell>
               <TableCell>
@@ -223,6 +314,7 @@ const CouponCodesTable = () => {
                   value={formData.expiryDate} 
                   name="expiryDate" 
                   onChange={handleChange}
+                  required
                 />
               </TableCell>
               <TableCell>
@@ -251,128 +343,150 @@ const CouponCodesTable = () => {
               </TableCell>
             </TableRow>
           )}
-          {coupons.map((coupon) => (
-            <TableRow key={coupon.id}>
-              {editingCoupon?.id === coupon.id ? (
-                <>
-                  <TableCell>
-                    <Input 
-                      value={formData.code} 
-                      name="code" 
-                      onChange={handleChange}
-                      className="uppercase"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2 items-center">
+          
+          {coupons.map((coupon) => {
+            const couponStatus = verifyCouponStatus(coupon);
+            
+            return (
+              <TableRow key={coupon.id}>
+                {editingCoupon?.id === coupon.id ? (
+                  <>
+                    <TableCell>
+                      <Input 
+                        value={formData.code} 
+                        name="code" 
+                        onChange={handleChange}
+                        className="uppercase"
+                        required
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2 items-center">
+                        <Input 
+                          type="number"
+                          value={formData.discount} 
+                          name="discount" 
+                          onChange={handleChange}
+                          min={1}
+                          className="w-20"
+                          required
+                        />
+                        <Select 
+                          value={formData.type} 
+                          onValueChange={(value) => handleSelectChange(value, "type")}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentage">%</SelectItem>
+                            <SelectItem value="fixed">₹ Fixed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <Input 
                         type="number"
-                        value={formData.discount} 
-                        name="discount" 
+                        value={formData.minAmount} 
+                        name="minAmount" 
                         onChange={handleChange}
                         min={0}
-                        className="w-20"
+                        className="w-24"
+                        required
                       />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 items-center">
+                        <span>{formData.usedCount} / </span>
+                        <Input 
+                          type="number"
+                          value={formData.maxUses} 
+                          name="maxUses" 
+                          onChange={handleChange}
+                          min={formData.usedCount}
+                          className="w-20"
+                          required
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        type="date"
+                        value={formData.expiryDate} 
+                        name="expiryDate" 
+                        onChange={handleChange}
+                        required
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Select 
-                        value={formData.type} 
-                        onValueChange={(value) => handleSelectChange(value, "type")}
+                        value={formData.status} 
+                        onValueChange={(value) => handleSelectChange(value, "status")}
                       >
-                        <SelectTrigger className="w-32">
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="percentage">%</SelectItem>
-                          <SelectItem value="fixed">₹ Fixed</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Input 
-                      type="number"
-                      value={formData.minAmount} 
-                      name="minAmount" 
-                      onChange={handleChange}
-                      min={0}
-                      className="w-24"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 items-center">
-                      <span>{formData.usedCount} / </span>
-                      <Input 
-                        type="number"
-                        value={formData.maxUses} 
-                        name="maxUses" 
-                        onChange={handleChange}
-                        min={formData.usedCount}
-                        className="w-20"
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Input 
-                      type="date"
-                      value={formData.expiryDate} 
-                      name="expiryDate" 
-                      onChange={handleChange}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={formData.status} 
-                      onValueChange={(value) => handleSelectChange(value, "status")}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="expired">Expired</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="default" size="icon" onClick={handleSave} className="bg-green-500 hover:bg-green-600">
-                        <Save className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="icon" onClick={handleCancel}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </>
-              ) : (
-                <>
-                  <TableCell className="font-semibold text-amber-600">{coupon.code}</TableCell>
-                  <TableCell>
-                    {coupon.discount}{coupon.type === 'percentage' ? '%' : ' ₹'}
-                  </TableCell>
-                  <TableCell>₹{coupon.minAmount}</TableCell>
-                  <TableCell>
-                    {coupon.usedCount} / {coupon.maxUses}
-                  </TableCell>
-                  <TableCell>{coupon.expiryDate}</TableCell>
-                  <TableCell>
-                    <Badge variant={coupon.status === "active" ? "default" : "secondary"} className={coupon.status === "active" ? "bg-green-500" : "bg-gray-400"}>
-                      {coupon.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(coupon)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(coupon.id)}>
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </>
-              )}
-            </TableRow>
-          ))}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="default" size="icon" onClick={handleSave} className="bg-green-500 hover:bg-green-600">
+                          <Save className="h-4 w-4" />
+                        </Button>
+                        <Button variant="destructive" size="icon" onClick={handleCancel}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </>
+                ) : (
+                  <>
+                    <TableCell className="font-semibold text-amber-600">{coupon.code}</TableCell>
+                    <TableCell>
+                      {coupon.discount}{coupon.type === 'percentage' ? '%' : ' ₹'}
+                    </TableCell>
+                    <TableCell>₹{coupon.minAmount}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <span>{coupon.usedCount} / {coupon.maxUses}</span>
+                        {coupon.usedCount >= coupon.maxUses && (
+                          <Badge variant="outline" className="bg-orange-100 text-orange-800 text-xs">Exhausted</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{coupon.expiryDate}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={couponStatus === "active" ? "default" : "secondary"} 
+                        className={
+                          couponStatus === "active" ? "bg-green-500" : 
+                          couponStatus === "expired" ? "bg-red-400" :
+                          "bg-gray-400"
+                        }
+                      >
+                        {couponStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(coupon)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(coupon.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </>
+                )}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
