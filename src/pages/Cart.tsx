@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -17,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import OrderSuccess from "@/components/OrderSuccess";
+import { useProducts } from "@/contexts/ProductContext";
 
 // Payment methods
 const paymentMethods = [
@@ -25,28 +27,8 @@ const paymentMethods = [
   { id: "cod", name: "Cash on Delivery", icon: "💵" },
 ];
 
-// Sample cart items - in a real app, this would come from a context or state management
-const initialCartItems = [
-  {
-    id: "1",
-    name: "Hyderabadi Chicken Biryani",
-    price: 999,
-    image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?q=80&w=400&auto=format",
-    quantity: 1,
-    store: "Biryani House"
-  },
-  {
-    id: "3",
-    name: "Butter Chicken Curry",
-    price: 899,
-    image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=400&auto=format",
-    quantity: 2,
-    store: "Curry Delight"
-  }
-];
-
 const Cart = () => {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const { cartItems, updateCartItemQuantity, removeFromCart, clearCart } = useProducts();
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("upi");
@@ -61,32 +43,6 @@ const Cart = () => {
   const deliveryFee = subtotal > 0 ? 199 : 0; // ₹199 delivery fee
   const tax = subtotal * 0.08; // Assuming 8% tax
   const grandTotal = subtotal + deliveryFee + tax - discount;
-
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 0) return;
-    if (newQuantity > 5) {
-      toast({
-        title: "Maximum limit reached",
-        description: "You can add up to 5 of each item",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setCartItems(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      ).filter(item => item.quantity > 0) // Remove items with quantity 0
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-    toast({
-      title: "Item removed",
-      description: "Item has been removed from your cart",
-    });
-  };
 
   const handleApplyCoupon = () => {
     if (!couponCode.trim()) {
@@ -136,12 +92,13 @@ const Cart = () => {
       setIsSuccess(true);
 
       // Clear cart after successful order
-      setCartItems([]);
+      clearCart();
     }, 2000);
   };
 
   const handleCloseSuccessModal = () => {
     setIsSuccess(false);
+    navigate('/');
   };
 
   return (
@@ -188,7 +145,7 @@ const Cart = () => {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
@@ -197,7 +154,7 @@ const Cart = () => {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -208,7 +165,7 @@ const Cart = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-red-500"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeFromCart(item.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

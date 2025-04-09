@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, Plus, Minus, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useProducts } from "@/contexts/ProductContext";
 
 interface ProductCardProps {
   id: string;
@@ -17,8 +18,8 @@ interface ProductCardProps {
 
 const ProductCard = ({ id, name, price, image, description, store }: ProductCardProps) => {
   const [quantity, setQuantity] = useState(1);
-  const [isInCart, setIsInCart] = useState(false);
   const { toast } = useToast();
+  const { addToCart, isInCart } = useProducts();
   const MAX_QUANTITY = 5;
 
   const increaseQuantity = () => {
@@ -40,12 +41,11 @@ const ProductCard = ({ id, name, price, image, description, store }: ProductCard
   };
 
   const handleAddToCart = () => {
-    console.log(`Added ${quantity} x ${name} to cart`);
+    addToCart({ id, name, price, image, description, store }, quantity);
     toast({
       title: "Added to cart",
       description: `${quantity} x ${name} added to your cart`,
     });
-    setIsInCart(true);
   };
 
   return (
@@ -68,7 +68,7 @@ const ProductCard = ({ id, name, price, image, description, store }: ProductCard
         <p className="text-muted-foreground line-clamp-2 text-sm mt-1">{description}</p>
         <div className="mt-2 font-bold text-lg text-gray-900">₹{price.toFixed(2)}</div>
         
-        {isInCart ? (
+        {isInCart(id) ? (
           <div className="flex items-center mt-2">
             <span className="text-sm text-green-600 font-medium flex items-center">
               <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
@@ -106,7 +106,7 @@ const ProductCard = ({ id, name, price, image, description, store }: ProductCard
         )}
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        {isInCart ? (
+        {isInCart(id) ? (
           <Button 
             className="w-full bg-green-600 hover:bg-green-700"
             size="sm"
