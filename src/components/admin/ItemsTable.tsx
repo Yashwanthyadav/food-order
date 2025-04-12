@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +7,7 @@ import { Edit, PlusCircle, Save, Trash2, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { useProducts } from '@/contexts/ProductContext';
 
 interface Item {
   id: number;
@@ -18,15 +20,8 @@ interface Item {
 
 const ItemsTable = () => {
   const { toast } = useToast();
-  // Sample menu item data
-  const [items, setItems] = useState<Item[]>([
-    { id: 1, name: "Butter Chicken Curry", category: "Main Course", price: 220, stock: 15, status: "available" },
-    { id: 2, name: "Vegetable Biryani", category: "Rice", price: 180, stock: 20, status: "available" },
-    { id: 3, name: "Paneer Tikka", category: "Appetizer", price: 150, stock: 0, status: "out of stock" },
-    { id: 4, name: "Garlic Naan", category: "Bread", price: 40, stock: 25, status: "available" },
-    { id: 5, name: "Flaky Paratha Bread", category: "Bread", price: 35, stock: 18, status: "available" }
-  ]);
-
+  const { adminItems, updateAdminItems } = useProducts();
+  const [items, setItems] = useState<Item[]>(adminItems);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [newItem, setNewItem] = useState(false);
   const [formData, setFormData] = useState<Item>({
@@ -37,6 +32,11 @@ const ItemsTable = () => {
     stock: 0,
     status: "available"
   });
+
+  // Update local items when adminItems change
+  useEffect(() => {
+    setItems(adminItems);
+  }, [adminItems]);
 
   const categories = ["Main Course", "Rice", "Appetizer", "Bread", "Dessert", "Beverage"];
 
@@ -89,25 +89,34 @@ const ItemsTable = () => {
       return;
     }
 
+    let updatedItems: Item[];
+
     if (newItem) {
       // Add new item
       const newItemWithId = {
         ...formData,
         id: items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1
       };
-      setItems([...items, newItemWithId]);
+      updatedItems = [...items, newItemWithId];
+      
       toast({
         title: "Item Added",
         description: `${newItemWithId.name} has been added to the menu.`,
       });
     } else {
       // Update existing item
-      setItems(items.map(item => item.id === formData.id ? formData : item));
+      updatedItems = items.map(item => item.id === formData.id ? formData : item);
+      
       toast({
         title: "Item Updated",
         description: `${formData.name} has been updated.`,
       });
     }
+    
+    setItems(updatedItems);
+    // Update the context with the new items
+    updateAdminItems(updatedItems);
+    
     setEditingItem(null);
     setNewItem(false);
   };
@@ -115,7 +124,11 @@ const ItemsTable = () => {
   const handleDelete = (id: number) => {
     const itemToDelete = items.find(item => item.id === id);
     if (itemToDelete) {
-      setItems(items.filter(item => item.id !== id));
+      const updatedItems = items.filter(item => item.id !== id);
+      setItems(updatedItems);
+      // Update the context with the new items
+      updateAdminItems(updatedItems);
+      
       toast({
         title: "Item Deleted",
         description: `${itemToDelete.name} has been removed from the menu.`,

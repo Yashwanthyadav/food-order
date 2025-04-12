@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import {
@@ -15,28 +15,50 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import OrderSuccess from "@/components/OrderSuccess";
 import { useProducts } from "@/contexts/ProductContext";
 
 // Payment methods
 const paymentMethods = [
+  { id: "razorpay", name: "Razorpay (Credit/Debit/UPI)", icon: "💳" },
   { id: "upi", name: "UPI / PhonePe / Google Pay", icon: "💳" },
   { id: "card", name: "Credit / Debit Card", icon: "💳" },
   { id: "cod", name: "Cash on Delivery", icon: "💵" },
 ];
 
+// Razorpay key - this is a public key, safe to be in frontend code
+const razorpayKeyId = "rzp_test_YourTestKeyHere"; // Replace with your actual Razorpay test key
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const Cart = () => {
   const { cartItems, updateCartItemQuantity, removeFromCart, clearCart } = useProducts();
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   // Calculate totals
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -70,6 +92,69 @@ const Cart = () => {
       });
     }
   };
+  
+  const handleRazorpayPayment = () => {
+    if (!window.Razorpay) {
+      toast({
+        title: "Payment Error",
+        description: "Razorpay is not loaded. Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Generate a random receipt ID
+    const receiptId = 'rcpt_' + Math.random().toString(36).substring(2, 15);
+    
+    // Razorpay options
+    const options = {
+      key: razorpayKeyId,
+      amount: Math.round(grandTotal * 100), // amount in paisa
+      currency: "INR",
+      name: "ShopNearby",
+      description: "Food Order Payment",
+      image: "https://placeholder.pics/svg/300/2196F3/FFFFFF/shop-icon",
+      order_id: "", // Will be generated on the server in a real app
+      handler: function (response: any) {
+        console.log("Payment success:", response);
+        // Generate a random order ID
+        const newOrderId = `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        setOrderId(newOrderId);
+        setIsProcessing(false);
+        setIsSuccess(true);
+        clearCart();
+        
+        toast({
+          title: "Payment Successful",
+          description: `Payment ID: ${response.razorpay_payment_id}`,
+        });
+      },
+      prefill: {
+        name: "Customer Name",
+        email: "customer@example.com",
+        contact: "9999999999",
+      },
+      notes: {
+        address: "Customer Address",
+      },
+      theme: {
+        color: "#F37254",
+      },
+      modal: {
+        ondismiss: function () {
+          setIsProcessing(false);
+          toast({
+            title: "Payment Cancelled",
+            description: "You have cancelled the payment process.",
+            variant: "destructive",
+          });
+        },
+      },
+    };
+    
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
+  };
 
   const handlePlaceOrder = () => {
     if (cartItems.length === 0) {
@@ -83,17 +168,22 @@ const Cart = () => {
 
     setIsProcessing(true);
 
-    // Simulate order processing
-    setTimeout(() => {
-      // Generate a random order ID
-      const newOrderId = `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      setOrderId(newOrderId);
-      setIsProcessing(false);
-      setIsSuccess(true);
+    // Handle different payment methods
+    if (paymentMethod === "razorpay") {
+      handleRazorpayPayment();
+    } else {
+      // Simulate order processing for other payment methods
+      setTimeout(() => {
+        // Generate a random order ID
+        const newOrderId = `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        setOrderId(newOrderId);
+        setIsProcessing(false);
+        setIsSuccess(true);
 
-      // Clear cart after successful order
-      clearCart();
-    }, 2000);
+        // Clear cart after successful order
+        clearCart();
+      }, 2000);
+    }
   };
 
   const handleCloseSuccessModal = () => {
@@ -214,6 +304,9 @@ const Cart = () => {
                           <Label htmlFor={method.id} className="flex items-center space-x-2 cursor-pointer">
                             <span className="text-xl">{method.icon}</span>
                             <span>{method.name}</span>
+                            {method.id === "razorpay" && (
+                              <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Recommended</span>
+                            )}
                           </Label>
                         </div>
                       ))}
@@ -256,11 +349,18 @@ const Cart = () => {
                 </CardContent>
                 <CardFooter>
                   <Button 
-                    className="w-full bg-amber-600 hover:bg-amber-700"
+                    className="w-full bg-amber-600 hover:bg-amber-700 flex items-center gap-2"
                     onClick={handlePlaceOrder}
                     disabled={isProcessing || cartItems.length === 0}
                   >
-                    {isProcessing ? "Processing..." : "Place Order"}
+                    {isProcessing ? (
+                      "Processing..."
+                    ) : (
+                      <>
+                        {paymentMethod === "razorpay" ? <CreditCard className="h-4 w-4" /> : null}
+                        {paymentMethod === "razorpay" ? "Pay with Razorpay" : "Place Order"}
+                      </>
+                    )}
                   </Button>
                 </CardFooter>
               </Card>

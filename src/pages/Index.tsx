@@ -15,26 +15,31 @@ const Index = () => {
   useEffect(() => {
     if (searchQuery) {
       const filtered = products.filter(product => 
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.store.toLowerCase().includes(searchQuery.toLowerCase())
+        !product.hidden && (
+          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.store.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       );
       setFilteredProducts(filtered);
     } else {
-      setFilteredProducts(products);
+      // Only show products that aren't hidden
+      setFilteredProducts(products.filter(product => !product.hidden));
     }
   }, [searchQuery, products]);
 
   const handleSearch = (query: string) => {
     if (query) {
       const filtered = products.filter(product => 
-        product.name.toLowerCase().includes(query.toLowerCase()) ||
-        product.description.toLowerCase().includes(query.toLowerCase()) ||
-        product.store.toLowerCase().includes(query.toLowerCase())
+        !product.hidden && (
+          product.name.toLowerCase().includes(query.toLowerCase()) ||
+          product.description.toLowerCase().includes(query.toLowerCase()) ||
+          product.store.toLowerCase().includes(query.toLowerCase())
+        )
       );
       setFilteredProducts(filtered);
     } else {
-      setFilteredProducts(products);
+      setFilteredProducts(products.filter(product => !product.hidden));
     }
   };
 
