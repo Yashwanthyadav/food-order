@@ -1,7 +1,5 @@
 
 import React, { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
@@ -11,47 +9,48 @@ interface LocationSelectorProps {
   onSelectLocation: (location: { address: string; coordinates: [number, number] }) => void;
 }
 
-// You'll need to replace this with your own Mapbox token
-// For a real application, this should be stored in environment variables
-const MAPBOX_TOKEN = "pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x1cWRhNWZmMGhndjJrcnp1ZGs1YXN3dCJ9.Nv7IIFhGFUvZi4FFcGdGbw";
-
 const LocationSelector: React.FC<LocationSelectorProps> = ({
   isOpen,
   onClose,
   onSelectLocation,
 }) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const marker = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const map = useRef<google.maps.Map | null>(null);
+  const marker = useRef<google.maps.Marker | null>(null);
   const [selectedCoordinates, setSelectedCoordinates] = useState<[number, number] | null>(null);
   const [address, setAddress] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !mapRef.current) return;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-
-    if (mapContainer.current && !map.current) {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [0, 0],
-        zoom: 1,
+    const initMap = async () => {
+      const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
+      
+      map.current = new Map(mapRef.current, {
+        center: { lat: 0, lng: 0 },
+        zoom: 2,
+        styles: [
+          {
+            featureType: "all",
+            elementType: "geometry",
+            stylers: [{ color: "#242f3e" }]
+          },
+          {
+            featureType: "water",
+            elementType: "geometry",
+            stylers: [{ color: "#17263c" }]
+          }
+        ]
       });
-
-      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
       // Try to get user's location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const { longitude, latitude } = position.coords;
-            map.current?.flyTo({
-              center: [longitude, latitude],
-              zoom: 14,
-              essential: true,
-            });
+            const { latitude, longitude } = position.coords;
+            map.current?.setCenter({ lat: latitude, lng: longitude });
+            map.current?.setZoom(14);
             setMarker([longitude, latitude]);
             reverseGeocode([longitude, latitude]);
           },
@@ -61,29 +60,53 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         );
       }
 
-      map.current.on("click", (e) => {
-        const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-        setMarker(coordinates);
-        reverseGeocode(coordinates);
+      map.current.addListener("click", (e: google.maps.MapMouseEvent) => {
+        if (e.latLng) {
+          const lat = e.latLng.lat();
+          const lng = e.latLng.lng();
+          setMarker([lng, lat]);
+          reverseGeocode([lng, lat]);
+        }
       });
-    }
+    };
+
+    // Load Google Maps script
+    const loadGoogleMaps = () => {
+      if (!window.google) {
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        script.onload = () => initMap();
+      } else {
+        initMap();
+      }
+    };
+
+    loadGoogleMaps();
 
     return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
+      if (marker.current) {
+        marker.current.setMap(null);
+        marker.current = null;
       }
+      map.current = null;
     };
   }, [isOpen]);
 
   const setMarker = (coordinates: [number, number]) => {
     if (marker.current) {
-      marker.current.remove();
+      marker.current.setMap(null);
     }
     
-    marker.current = new mapboxgl.Marker({ color: "#FF0000" })
-      .setLngLat(coordinates)
-      .addTo(map.current!);
+    if (map.current) {
+      marker.current = new google.maps.Marker({
+        position: { lng: coordinates[0], lat: coordinates[1] },
+        map: map.current,
+        animation: google.maps.Animation.DROP
+      });
+    }
     
     setSelectedCoordinates(coordinates);
   };
@@ -91,12 +114,13 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const reverseGeocode = async (coordinates: [number, number]) => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${MAPBOX_TOKEN}`
-      );
-      const data = await response.json();
-      if (data.features && data.features.length > 0) {
-        setAddress(data.features[0].place_name);
+      const geocoder = new google.maps.Geocoder();
+      const response = await geocoder.geocode({
+        location: { lng: coordinates[0], lat: coordinates[1] }
+      });
+      
+      if (response.results[0]) {
+        setAddress(response.results[0].formatted_address);
       }
     } catch (error) {
       console.error("Error fetching address:", error);
@@ -128,7 +152,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         </div>
         
         <div className="relative flex-1 min-h-[400px]">
-          <div ref={mapContainer} className="absolute inset-0" />
+          <div ref={mapRef} className="absolute inset-0" />
         </div>
         
         <div className="p-4 border-t">

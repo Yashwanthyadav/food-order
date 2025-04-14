@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 // Define types
@@ -9,6 +8,7 @@ interface Product {
   image: string;
   description: string;
   store: string;
+  hidden?: boolean;  // Added hidden property
 }
 
 interface CartItem extends Product {
