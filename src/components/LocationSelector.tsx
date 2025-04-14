@@ -74,7 +74,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     const loadGoogleMaps = () => {
       if (!window.google) {
         const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyA-zEvrEzW5PPhhoI54Buk-KYxFQEjY_NM&libraries=places`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCHTmB9ycX3APKhc90xV39mfJs7CiMoXb8&libraries=places`;
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);
