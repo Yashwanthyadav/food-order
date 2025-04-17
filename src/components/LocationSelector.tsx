@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import * as maptilersdk from '@maptiler/sdk';
+import '@maptiler/sdk/dist/maptiler-sdk.css';
 
 interface LocationSelectorProps {
   isOpen: boolean;
@@ -15,41 +17,35 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   onSelectLocation,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const map = useRef<google.maps.Map | null>(null);
-  const marker = useRef<google.maps.Marker | null>(null);
+  const map = useRef<maptilersdk.Map | null>(null);
+  const marker = useRef<maptilersdk.Marker | null>(null);
   const [selectedCoordinates, setSelectedCoordinates] = useState<[number, number] | null>(null);
   const [address, setAddress] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Set your MapTiler API key
+  const MAPTILER_API_KEY = "7j9dJtmvROJGqZV6sYKF";
+  
   useEffect(() => {
     if (!isOpen || !mapRef.current) return;
+    
+    maptilersdk.config.apiKey = MAPTILER_API_KEY;
 
     const initMap = async () => {
-      const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-      
-      map.current = new Map(mapRef.current, {
-        center: { lat: 0, lng: 0 },
-        zoom: 2,
-        styles: [
-          {
-            featureType: "all",
-            elementType: "geometry",
-            stylers: [{ color: "#242f3e" }]
-          },
-          {
-            featureType: "water",
-            elementType: "geometry",
-            stylers: [{ color: "#17263c" }]
-          }
-        ]
+      // Initialize the map
+      map.current = new maptilersdk.Map({
+        container: mapRef.current,
+        style: maptilersdk.MapStyle.STREETS,
+        center: [0, 0],
+        zoom: 2
       });
 
       // Try to get user's location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const { latitude, longitude } = position.coords;
-            map.current?.setCenter({ lat: latitude, lng: longitude });
+            const { longitude, latitude } = position.coords;
+            map.current?.setCenter([longitude, latitude]);
             map.current?.setZoom(14);
             setMarker([longitude, latitude]);
             reverseGeocode([longitude, latitude]);
@@ -60,52 +56,38 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         );
       }
 
-      map.current.addListener("click", (e: google.maps.MapMouseEvent) => {
-        if (e.latLng) {
-          const lat = e.latLng.lat();
-          const lng = e.latLng.lng();
-          setMarker([lng, lat]);
-          reverseGeocode([lng, lat]);
-        }
+      // Add click event to map
+      map.current.on('click', (e) => {
+        const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+        setMarker(coordinates);
+        reverseGeocode(coordinates);
       });
     };
 
-    // Load Google Maps script
-    const loadGoogleMaps = () => {
-      if (!window.google) {
-        const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCHTmB9ycX3APKhc90xV39mfJs7CiMoXb8&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        document.head.appendChild(script);
-        script.onload = () => initMap();
-      } else {
-        initMap();
-      }
-    };
-
-    loadGoogleMaps();
+    initMap();
 
     return () => {
       if (marker.current) {
-        marker.current.setMap(null);
+        marker.current.remove();
         marker.current = null;
       }
+      map.current?.remove();
       map.current = null;
     };
   }, [isOpen]);
 
   const setMarker = (coordinates: [number, number]) => {
     if (marker.current) {
-      marker.current.setMap(null);
+      marker.current.remove();
     }
     
     if (map.current) {
-      marker.current = new google.maps.Marker({
-        position: { lng: coordinates[0], lat: coordinates[1] },
-        map: map.current,
-        animation: google.maps.Animation.DROP
-      });
+      // Create a new marker
+      marker.current = new maptilersdk.Marker({
+        color: "#FF0000"
+      })
+        .setLngLat(coordinates)
+        .addTo(map.current);
     }
     
     setSelectedCoordinates(coordinates);
@@ -114,25 +96,28 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const reverseGeocode = async (coordinates: [number, number]) => {
     setLoading(true);
     try {
-      const geocoder = new google.maps.Geocoder();
-      const response = await geocoder.geocode({
-        location: { lng: coordinates[0], lat: coordinates[1] }
-      });
+      const response = await fetch(
+        `https://api.maptiler.com/geocoding/${coordinates[0]},${coordinates[1]}.json?key=${MAPTILER_API_KEY}`
+      );
+      const data = await response.json();
       
-      if (response.results[0]) {
-        setAddress(response.results[0].formatted_address);
+      if (data.features && data.features.length > 0) {
+        setAddress(data.features[0].place_name || "Selected location");
+      } else {
+        setAddress("Selected location");
       }
     } catch (error) {
       console.error("Error fetching address:", error);
+      setAddress("Selected location");
     } finally {
       setLoading(false);
     }
   };
 
   const handleConfirmLocation = () => {
-    if (selectedCoordinates && address) {
+    if (selectedCoordinates) {
       onSelectLocation({
-        address,
+        address: address || "Selected location",
         coordinates: selectedCoordinates,
       });
       onClose();
