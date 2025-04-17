@@ -24,7 +24,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   // Set your MapTiler API key
-  const MAPTILER_API_KEY = "7j9dJtmvROJGqZV6sYKF";
+  const MAPTILER_API_KEY = "SzoN1tadoVqraQZTVwYX";
   
   useEffect(() => {
     if (!isOpen || !mapRef.current) return;
@@ -97,7 +97,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     setLoading(true);
     try {
       const response = await fetch(
-        `https://api.maptiler.com/geocoding/${coordinates[0]},${coordinates[1]}.json?key=${SzoN1tadoVqraQZTVwYX}`
+        `https://api.maptiler.com/geocoding/${coordinates[0]},${coordinates[1]}.json?key=${MAPTILER_API_KEY}`
       );
       const data = await response.json();
       
