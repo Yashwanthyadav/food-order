@@ -29,7 +29,7 @@ const paymentMethods = [
 ];
 
 // Razorpay key - this is a public key, safe to be in frontend code
-const razorpayKeyId = "rzp_test_YourTestKeyHere"; // Replace with your actual Razorpay test key
+const razorpayKeyId = "rzp_test_PV1oQ0oMtgXOsq"; // Replace with your actual Razorpay test key
 
 declare global {
   interface Window {
@@ -45,6 +45,7 @@ const Cart = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -53,12 +54,24 @@ const Cart = () => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
+    script.onload = () => {
+      setIsRazorpayLoaded(true);
+      console.log("Razorpay SDK loaded successfully");
+    };
+    script.onerror = () => {
+      console.error("Failed to load Razorpay SDK");
+      toast({
+        title: "Payment Error",
+        description: "Could not load payment gateway. Please try again later.",
+        variant: "destructive",
+      });
+    };
     document.body.appendChild(script);
     
     return () => {
       document.body.removeChild(script);
     };
-  }, []);
+  }, [toast]);
 
   // Calculate totals
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -94,30 +107,39 @@ const Cart = () => {
   };
   
   const handleRazorpayPayment = () => {
-    if (!window.Razorpay) {
+    if (!isRazorpayLoaded) {
       toast({
-        title: "Payment Error",
-        description: "Razorpay is not loaded. Please try again later.",
+        title: "Payment Gateway Not Ready",
+        description: "Please wait while we initialize the payment gateway or try again later.",
         variant: "destructive",
       });
       return;
     }
     
-    // Generate a random receipt ID
+    // Generate order details
+    const currency = "INR";
+    const amount = Math.round(grandTotal * 100); // amount in paise
     const receiptId = 'rcpt_' + Math.random().toString(36).substring(2, 15);
+    const name = "ShopNearby";
+    const description = "Food Order Payment";
     
-    // Razorpay options
-    const options = {
+    // Customer info - in a real app, this would come from user input or account details
+    const customerName = "Customer";
+    const customerEmail = "customer@example.com";
+    const customerPhone = "9876543210";
+    
+    // Create a new Razorpay instance
+    const razorpayOptions = {
       key: razorpayKeyId,
-      amount: Math.round(grandTotal * 100), // amount in paisa
-      currency: "INR",
-      name: "ShopNearby",
-      description: "Food Order Payment",
-      image: "https://placeholder.pics/svg/300/2196F3/FFFFFF/shop-icon",
-      order_id: "", // Will be generated on the server in a real app
+      amount: amount,
+      currency: currency,
+      name: name,
+      description: description,
+      image: "https://placeholder.pics/svg/300/2196F3/FFFFFF/shop-nearby",
+      order_id: "", // This would typically come from your backend
       handler: function (response: any) {
-        console.log("Payment success:", response);
-        // Generate a random order ID
+        console.log("Payment successful:", response);
+        // Process successful payment
         const newOrderId = `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
         setOrderId(newOrderId);
         setIsProcessing(false);
@@ -130,15 +152,22 @@ const Cart = () => {
         });
       },
       prefill: {
-        name: "Customer Name",
-        email: "customer@example.com",
-        contact: "9999999999",
+        name: customerName,
+        email: customerEmail,
+        contact: customerPhone,
       },
       notes: {
         address: "Customer Address",
+        order_id: receiptId,
+        items: JSON.stringify(cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })))
       },
       theme: {
-        color: "#F37254",
+        color: "#f59e0b", // Amber color to match the site theme
       },
       modal: {
         ondismiss: function () {
@@ -152,8 +181,19 @@ const Cart = () => {
       },
     };
     
-    const razorpay = new window.Razorpay(options);
-    razorpay.open();
+    try {
+      const razorpay = new window.Razorpay(razorpayOptions);
+      // Open Razorpay checkout form
+      razorpay.open();
+    } catch (error) {
+      console.error("Razorpay error:", error);
+      setIsProcessing(false);
+      toast({
+        title: "Payment Error",
+        description: "There was an error initializing the payment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePlaceOrder = () => {
