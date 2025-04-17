@@ -97,7 +97,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     setLoading(true);
     try {
       const response = await fetch(
-        `https://api.maptiler.com/geocoding/${coordinates[0]},${coordinates[1]}.json?key=${MAPTILER_API_KEY}`
+        `https://api.maptiler.com/geocoding/${coordinates[0]},${coordinates[1]}.json?key=${eIXrUB4kYtH5TEF7Y4sY}`
       );
       const data = await response.json();
       
