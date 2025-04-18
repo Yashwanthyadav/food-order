@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
+import SupportDashboard from "./pages/SupportDashboard";
 
 const queryClient = new QueryClient();
 
