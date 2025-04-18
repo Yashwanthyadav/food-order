@@ -2,9 +2,11 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Users, Bell, Clock } from "lucide-react";
-import { useState } from "react";
+import { MessageCircle, Users, Bell, Clock, Send } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Message } from "@/components/LiveChat/ChatMessage";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface Chat {
   id: string;
@@ -18,7 +20,8 @@ interface Chat {
 
 const SupportDashboard = () => {
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
-  const [chats] = useState<Chat[]>([
+  const [newMessage, setNewMessage] = useState("");
+  const [chats, setChats] = useState<Chat[]>([
     {
       id: '1',
       customer: 'John Doe',
@@ -35,23 +38,80 @@ const SupportDashboard = () => {
         },
       ],
     },
-    {
-      id: '2',
-      customer: 'Jane Smith',
-      lastMessage: 'Thanks for your help!',
-      unread: false,
-      status: 'resolved',
-      timestamp: new Date(Date.now() - 3600000),
-      messages: [
-        {
-          id: '2',
-          content: 'Thanks for your help!',
-          sender: 'user',
-          timestamp: new Date(Date.now() - 3600000),
-        },
-      ],
-    },
   ]);
+
+  useEffect(() => {
+    const handleNewMessage = (event: CustomEvent<{ message: Message }>) => {
+      const { message } = event.detail;
+      
+      setChats(prevChats => {
+        // Find existing chat or create new one
+        const existingChatIndex = prevChats.findIndex(chat => 
+          chat.messages.some(msg => msg.sender === message.sender)
+        );
+
+        if (existingChatIndex >= 0) {
+          const updatedChats = [...prevChats];
+          updatedChats[existingChatIndex] = {
+            ...updatedChats[existingChatIndex],
+            lastMessage: message.content,
+            unread: true,
+            timestamp: message.timestamp,
+            messages: [...updatedChats[existingChatIndex].messages, message],
+          };
+          return updatedChats;
+        }
+
+        // Create new chat
+        return [...prevChats, {
+          id: Date.now().toString(),
+          customer: 'New Customer',
+          lastMessage: message.content,
+          unread: true,
+          status: 'active',
+          timestamp: message.timestamp,
+          messages: [message],
+        }];
+      });
+    };
+
+    window.addEventListener('new-chat-message', handleNewMessage as EventListener);
+    return () => {
+      window.removeEventListener('new-chat-message', handleNewMessage as EventListener);
+    };
+  }, []);
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !activeChat) return;
+
+    const message: Message = {
+      id: Date.now().toString(),
+      content: newMessage.trim(),
+      sender: 'support',
+      timestamp: new Date(),
+    };
+
+    // Update local state
+    setChats(prevChats => {
+      const updatedChats = [...prevChats];
+      const chatIndex = updatedChats.findIndex(chat => chat.id === activeChat.id);
+      if (chatIndex >= 0) {
+        updatedChats[chatIndex] = {
+          ...updatedChats[chatIndex],
+          lastMessage: message.content,
+          messages: [...updatedChats[chatIndex].messages, message],
+        };
+      }
+      return updatedChats;
+    });
+
+    // Emit message to user's chat window
+    window.dispatchEvent(new CustomEvent('support-message', { 
+      detail: { message }
+    }));
+
+    setNewMessage("");
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -141,32 +201,46 @@ const SupportDashboard = () => {
             </CardHeader>
             <CardContent>
               {activeChat ? (
-                <ScrollArea className="h-[calc(100vh-300px)]">
-                  {activeChat.messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${
-                        message.sender === 'user' ? 'justify-start' : 'justify-end'
-                      } mb-4`}
-                    >
+                <div className="h-[calc(100vh-300px)] flex flex-col">
+                  <ScrollArea className="flex-1 mb-4">
+                    {activeChat.messages.map((message) => (
                       <div
-                        className={`max-w-[70%] rounded-lg p-3 ${
-                          message.sender === 'user'
-                            ? 'bg-secondary'
-                            : 'bg-primary text-primary-foreground'
-                        }`}
+                        key={message.id}
+                        className={`flex ${
+                          message.sender === 'user' ? 'justify-start' : 'justify-end'
+                        } mb-4`}
                       >
-                        <p className="text-sm">{message.content}</p>
-                        <span className="text-xs opacity-70 mt-1 block">
-                          {message.timestamp.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+                        <div
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            message.sender === 'user'
+                              ? 'bg-secondary'
+                              : 'bg-primary text-primary-foreground'
+                          }`}
+                        >
+                          <p className="text-sm">{message.content}</p>
+                          <span className="text-xs opacity-70 mt-1 block">
+                            {message.timestamp.toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </ScrollArea>
+                    ))}
+                  </ScrollArea>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      placeholder="Type your reply..."
+                      className="flex-1"
+                    />
+                    <Button onClick={handleSendMessage} size="icon">
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <div className="h-[calc(100vh-300px)] flex items-center justify-center text-muted-foreground">
                   Select a conversation to view messages

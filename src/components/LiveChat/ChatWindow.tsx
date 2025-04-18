@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import ChatMessage, { Message } from "./ChatMessage";
 import { useToast } from "@/hooks/use-toast";
+import { nanoid } from "@/lib/utils";
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ const ChatWindow = ({ isOpen, onClose }: ChatWindowProps) => {
     if (!newMessage.trim()) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: nanoid(),
       content: newMessage.trim(),
       sender: 'user',
       timestamp: new Date(),
@@ -37,21 +38,27 @@ const ChatWindow = ({ isOpen, onClose }: ChatWindowProps) => {
     setMessages(prev => [...prev, userMessage]);
     setNewMessage("");
 
-    // Simulate support response
-    setTimeout(() => {
-      const supportMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Thanks for your message! Our support team will get back to you soon.",
-        sender: 'support',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, supportMessage]);
+    // Emit the message to support dashboard
+    window.dispatchEvent(new CustomEvent('new-chat-message', { 
+      detail: { message: userMessage }
+    }));
+  };
+
+  // Listen for support responses
+  useState(() => {
+    const handleSupportMessage = (event: CustomEvent<{ message: Message }>) => {
+      setMessages(prev => [...prev, event.detail.message]);
       toast({
         title: "New Message",
         description: "You have a new message from support",
       });
-    }, 1000);
-  };
+    };
+
+    window.addEventListener('support-message', handleSupportMessage as EventListener);
+    return () => {
+      window.removeEventListener('support-message', handleSupportMessage as EventListener);
+    };
+  });
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
