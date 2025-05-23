@@ -2,11 +2,19 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MapPin, Search, ShoppingCart, User, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import LocationSelector from "./LocationSelector";
 import SearchBar from "./SearchBar";
 import { useProducts } from "@/contexts/ProductContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -17,6 +25,9 @@ const Header: React.FC<HeaderProps> = ({ onSearch }) => {
   const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false);
   const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
   const { getCartItemCount } = useProducts();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLocationSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +38,23 @@ const Header: React.FC<HeaderProps> = ({ onSearch }) => {
     setLocation(locationData.address);
     setCoordinates(locationData.coordinates);
     console.log("Selected location:", locationData);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out",
+      });
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -69,12 +97,32 @@ const Header: React.FC<HeaderProps> = ({ onSearch }) => {
           <SearchBar onSearch={onSearch} />
 
           <div className="flex items-center space-x-4">
-            {/* Login Button */}
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/login">
-                <User className="h-6 w-6" />
-              </Link>
-            </Button>
+            {/* User Menu */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User className="h-6 w-6" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>{user.email}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut} className="flex items-center">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/auth">
+                  <User className="h-6 w-6" />
+                </Link>
+              </Button>
+            )}
 
             {/* Cart */}
             <div className="relative">
